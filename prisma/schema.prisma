@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model authors {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  bio        String    @db.VarChar(512)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+  books      books[]
+}
+
+model books {
+  id          Int           @id @default(autoincrement())
+  title       String        @db.VarChar(255)
+  description String        @db.VarChar(512)
+  genre       String        @db.VarChar(255)
+  isbn        String        @db.VarChar(255)
+  authorId    Int
+  created_at  DateTime?     @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?     @default(now()) @db.Timestamp(0)
+  status      books_status?
+  authors     authors       @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "books_ibfk_1")
+  loans       loans[]
+
+  @@index([authorId], map: "authorId")
+}
+
+model users {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  email      String      @db.VarChar(255)
+  password   String      @db.VarChar(255)
+  role       users_role? @default(user)
+  created_at DateTime?   @default(now()) @db.Timestamp(0)
+  updated_at DateTime?   @default(now()) @db.Timestamp(0)
+  loans      loans[]
+}
+
+model loans {
+  id         Int           @id @default(autoincrement())
+  userId     Int?
+  bookId     Int?
+  loanDate   DateTime?     @db.Date
+  returnDate DateTime?     @db.Date
+  status     loans_status?
+  users      users?        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "loans_ibfk_1")
+  books      books?        @relation(fields: [bookId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "loans_ibfk_2")
+
+  @@index([bookId], map: "bookId")
+  @@index([userId], map: "userId")
+}
+
+enum users_role {
+  admin
+  user
+}
+
+enum books_status {
+  available
+  lent
+}
+
+enum loans_status {
+  borrowed
+  returned
+}
